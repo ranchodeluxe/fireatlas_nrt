@@ -78,7 +78,7 @@ class ReadActiveFirePixels(beam.PTransform):
 
     def expand(self, pcoll):
         return pcoll | "ReadCSV" >> beam.Map(
-                _add_keys(self.read_csv),
+                _add_keys(read_csv),
                 columns=self.columns,
                 renames=self.renames,
                 fsspec_open_kwargs=fsspec_open_kwargs
