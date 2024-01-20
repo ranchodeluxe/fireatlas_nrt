@@ -1,3 +1,5 @@
+import uuid
+
 import apache_beam as beam
 from pangeo_forge_recipes.transforms import (
     StoreToZarr,
@@ -19,8 +21,7 @@ def _add_keys(
     """Convenience decorator to remove and re-add keys to items in a Map"""
     # @wraps(func)  # doesn't work for some reason
     def wrapper(arg, *args, **kwargs):
-        print(f"[ ARRRG ]: {arg}")
-        key, item = arg
+        key, item = str(uuid.uuid4())[:8], arg
         result = func(item, *args, **kwargs)
         return key, result
     return wrapper
