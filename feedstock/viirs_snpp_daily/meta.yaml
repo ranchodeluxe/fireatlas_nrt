@@ -1,0 +1,5 @@
+title: "VIIRS-SNPP-DAILY"
+description: ""
+recipes:
+  - id: "viirs_snpp_daily"
+    object: "recipe:viirs_snpp_daily"

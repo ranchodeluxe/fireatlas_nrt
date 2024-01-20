@@ -1,0 +1,17 @@
+# look for non-vectorized operations and generally think about only using vectorized operations on arrays
+# look to reduce to single parallelized jobs
+# think about a single timestep
+
+0. I'm learning something important from apache-beam and pangeo-forge about remote files
+0. [parallel job]: region definitions and remove_static_sources updates
+0. [parallel job [daily||monthly]]: `read_AFP > read_AFPVIIRSNRT` globally to zarr store
+0. note that AllFires.clear happens for each timestep (which means they are just used probably for a single timestep as lookups and can be moved out).
+this also means we might not have to manage this relationship.
+0. note that AllFire.heritages and AllFires.id_dict are commented "cumulative" so that's an operation that can and be stored separate
+0. each timestep day is a separate AllFires object
+0. we only focus on 1-7
+
+# STOP:
+0. let's run a pangeo-forge recipe to convert active pixels to zarr store
+0. let's convert some AllFires pickels into dataframes and see if we can ETL data
+0. understand what Fire_expand_rtree and Fire_merge_rtree do deeply
