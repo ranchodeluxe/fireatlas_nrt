@@ -64,11 +64,11 @@ import os
 viirs_usecols = [
     "latitude",
     "longitude",
-    "daynight",
+    #"daynight",
     "frp",
     #"confidence",
-    "scan",
-    "track",
+    #"scan",
+    #"track",
     "acq_date",
     "acq_time",
 ]
@@ -77,8 +77,8 @@ rename_viirs_columns = {
     "latitude": "Lat",
     "longitude": "Lon",
     "frp": "FRP",
-    "scan": "DS",
-    "track": "DT",
+    #"scan": "DS",
+    #"track": "DT",
     "acq_date_acq_time": "YYYYMMDD_HHMM",
 }
 
