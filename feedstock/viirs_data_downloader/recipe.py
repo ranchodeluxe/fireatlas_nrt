@@ -1,7 +1,8 @@
 import apache_beam as beam
 from pangeo_forge_recipes.patterns import FilePattern, ConcatDim
+from pangeo_forge_recipes.types import Index
 import logging
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from datetime import datetime, timedelta
 logger = logging.getLogger('apache-beam')
 import fsspec
@@ -58,7 +59,8 @@ pattern = FilePattern(
 )
 
 
-def download_csv(input_file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict, output_path_prefix: str) -> str:
+def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fsspec_open_kwargs: Dict, output_path_prefix: str) -> str:
+    key, input_file_path = item
     file_name = os.path.basename(input_file_path)
 
     with fsspec.open(input_file_path, mode='r') as f:
