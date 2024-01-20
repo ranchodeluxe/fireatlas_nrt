@@ -116,22 +116,22 @@ pattern = FilePattern(
 
 
 def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
-    with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
-        try:
+    try:
+        with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
             df = pd.read_csv(
                 f,
                 parse_dates=[["acq_date", "acq_time"]],
                 usecols=columns,
                 skipinitialspace=True
             )
-        except FileNotFoundError:
-            df = pd.DataFrame(columns=columns)
-        df = df.rename(columns=renames)
-        # add index so xr.DataSet converts to dimensions
-        df = df.set_index(['YYYYMMDD_HHMM'])
-        ds = xr.Dataset.from_dataframe(df)
-        #ds = ds.chunk(1000)
-        return ds
+    except FileNotFoundError:
+        df = pd.DataFrame(columns=columns)
+
+    df = df.rename(columns=renames)
+    # add index so xr.DataSet converts to dimensions
+    df = df.set_index(['YYYYMMDD_HHMM'])
+    ds = xr.Dataset.from_dataframe(df)
+    return ds
 
 
 class ReadActiveFirePixels(beam.PTransform):
