@@ -16,17 +16,41 @@ import fsspec
 import pandas as pd
 import os
 
-
-# def _add_keys(
-#     func
-# ):
-#     """Convenience decorator to remove and re-add keys to items in a Map"""
-#     # @wraps(func)  # doesn't work for some reason
-#     def wrapper(arg, *args, **kwargs):
-#         key, item = str(uuid.uuid4())[:8], arg
-#         result = func(item, *args, **kwargs)
-#         return key, result
-#     return wrapper
+# import xarray as xr
+# import fsspec
+# import pandas as pd
+# columns = [
+#     "latitude",
+#     "longitude",
+#     "daynight",
+#     "frp",
+#     "confidence",
+#     "scan",
+#     "track",
+#     "acq_date",
+#     "acq_time",
+# ]
+# renames = {
+#     "latitude": "Lat",
+#     "longitude": "Lon",
+#     "frp": "FRP",
+#     "scan": "DS",
+#     "track": "DT",
+#     "acq_date_acq_time": "YYYYMMDD_HHMM",
+# }
+# path='s3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_2023240.txt'
+# with fsspec.open(path, mode='r') as f:
+#     df = pd.read_csv(
+#         f,
+#         parse_dates=[["acq_date", "acq_time"]],
+#         usecols=columns,
+#         skipinitialspace=True
+#     )
+#     df = df.rename(columns=renames)
+#     ds = xr.Dataset.from_dataframe(df)
+#     ds = ds.set_coords('Lat')
+#     ds = ds.set_coords('Lon')
+#     ds = ds.set_coords('YYYYMMDD_HHMM')
 
 
 viirs_usecols = [
@@ -76,6 +100,7 @@ pattern = FilePattern(
     ConcatDim(name="YYYMMDD_HHMM", keys=list(file_dt_generator())),
 )
 
+
 def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
     with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
         df = pd.read_csv(
@@ -85,7 +110,12 @@ def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwar
             skipinitialspace=True
         )
         df = df.rename(columns=renames)
-        return xr.Dataset.from_dataframe(df)
+        ds = xr.Dataset.from_dataframe(df)
+        # promote data variables to dimensions
+        ds = ds.set_coords('Lat')
+        ds = ds.set_coords('Lon')
+        ds = ds.set_coords('YYYYMMDD_HHMM')
+        return ds
 
 
 class ReadActiveFirePixels(beam.PTransform):
