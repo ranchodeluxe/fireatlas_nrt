@@ -99,13 +99,13 @@ def file_dt_generator(begin=(2023, 9, 9), end=(2023, 9, 16)):
         begin_dt += timedelta(days=1)
 
 
-def file_pattern_generator(YYYMMDD_HHMM):
-    return f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{YYYMMDD_HHMM}.txt'
+def file_pattern_generator(YYYYMMDD_HHMM):
+    return f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{YYYYMMDD_HHMM}.txt'
 
 
 pattern = FilePattern(
     file_pattern_generator,
-    ConcatDim(name="YYYMMDD_HHMM", keys=list(file_dt_generator())),
+    ConcatDim(name="YYYYMMDD_HHMM", keys=list(file_dt_generator())),
 )
 
 
@@ -121,7 +121,7 @@ def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwar
         # add index so xr.DataSet converts to dimensions
         df = df.set_index(['YYYYMMDD_HHMM'])
         ds = xr.Dataset.from_dataframe(df)
-        ds = ds.chunk(1000)
+        #ds = ds.chunk(1000)
         return ds
 
 
@@ -151,6 +151,6 @@ viirs_snpp_daily = (
     | StoreToZarr(
         store_name="viirs_snpp_daily.zarr",
         combine_dims=pattern.combine_dim_keys,
-        target_chunks={'YYYYMMDD_HHMM': 100}
+        target_chunks={'YYYYMMDD_HHMM': 1000}
     )
 )
