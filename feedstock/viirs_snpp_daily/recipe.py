@@ -3,8 +3,7 @@ from pangeo_forge_recipes.transforms import (
     StoreToZarr,
     _add_keys,
 )
-from pangeo_forge_recipes.patterns import ConcatDim
-from pangeo_forge_recipes.types import Dimension
+from pangeo_forge_recipes.types import Dimension, CombineOp
 import logging
 from datetime import datetime, timedelta
 logger = logging.getLogger('apache-beam')
@@ -83,8 +82,6 @@ class ReadActiveFirePixels(beam.PTransform):
         )
 
 
-concat_dim = ConcatDim(name="YYYYMMDD_HHMM", keys=list(file_dt_generator()))
-
 viirs_snpp_daily = (
     beam.Create(file_pattern_generator())
     | ReadActiveFirePixels(
@@ -94,6 +91,6 @@ viirs_snpp_daily = (
     )
     | StoreToZarr(
         store_name="viirs_snpp_daily.zarr",
-        combine_dims=[Dimension(dim.name, dim.operation) for dim in concat_dim]
+        combine_dims=[Dimension("YYYYMMDD_HHMM", CombineOp.CONCAT),]
     )
 )
