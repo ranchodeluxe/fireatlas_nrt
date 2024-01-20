@@ -68,7 +68,7 @@ def file_dt_generator(begin=(2023, 9, 9), end=(2023, 9, 16)):
 
 
 def file_pattern_generator(YYYMMDD_HHMM):
-    yield f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{YYYMMDD_HHMM}.txt'
+    return f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{YYYMMDD_HHMM}.txt'
 
 
 pattern = FilePattern(
