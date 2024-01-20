@@ -63,7 +63,7 @@ def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fss
     key, input_file_path = item
     file_name = os.path.basename(input_file_path)
 
-    with fsspec.open(input_file_path, mode='r') as f:
+    with fsspec.open(input_file_path, mode='r', block_size=0) as f:
         df = pd.read_csv(
             f,
             parse_dates=[["acq_date", "acq_time"]],
