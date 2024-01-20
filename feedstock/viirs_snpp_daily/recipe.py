@@ -1,3 +1,5 @@
+import uuid
+
 import apache_beam as beam
 from pangeo_forge_recipes.transforms import (
     StoreToZarr,
@@ -66,7 +68,7 @@ def read_csv(file_pattern:str, columns: List[str], renames: Dict, fsspec_open_kw
             skipinitialspace=True
         )
         df = df.rename(columns=renames)
-        return xr.Dataset.from_dataframe(df)
+        return (str(uuid.uuid4())[:8], xr.Dataset.from_dataframe(df))
 
 
 class ReadActiveFirePixels(beam.PTransform):
