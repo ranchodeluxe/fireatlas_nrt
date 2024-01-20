@@ -3,9 +3,10 @@ import uuid
 import apache_beam as beam
 from pangeo_forge_recipes.transforms import (
     StoreToZarr,
-    #_add_keys,
+    _add_keys,
 )
 from pangeo_forge_recipes.types import Dimension, CombineOp
+from pangeo_forge_recipes.patterns import FilePattern, ConcatDim
 import logging
 from typing import List, Dict
 from datetime import datetime, timedelta
@@ -16,16 +17,16 @@ import pandas as pd
 import os
 
 
-def _add_keys(
-    func
-):
-    """Convenience decorator to remove and re-add keys to items in a Map"""
-    # @wraps(func)  # doesn't work for some reason
-    def wrapper(arg, *args, **kwargs):
-        key, item = str(uuid.uuid4())[:8], arg
-        result = func(item, *args, **kwargs)
-        return key, result
-    return wrapper
+# def _add_keys(
+#     func
+# ):
+#     """Convenience decorator to remove and re-add keys to items in a Map"""
+#     # @wraps(func)  # doesn't work for some reason
+#     def wrapper(arg, *args, **kwargs):
+#         key, item = str(uuid.uuid4())[:8], arg
+#         result = func(item, *args, **kwargs)
+#         return key, result
+#     return wrapper
 
 
 viirs_usecols = [
@@ -66,10 +67,14 @@ def file_dt_generator(begin=(2023, 9, 9), end=(2023, 9, 16)):
         begin_dt += timedelta(days=1)
 
 
-def file_pattern_generator():
-    for dt_str in file_dt_generator():
-        yield f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{dt_str}.txt'
+def file_pattern_generator(dt_str):
+    yield f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{dt_str}.txt'
 
+
+pattern = FilePattern(
+    file_pattern_generator,
+    ConcatDim(name="YYYMMDD_HHMM", keys=list(file_dt_generator())),
+)
 
 def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
     with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
@@ -100,7 +105,7 @@ class ReadActiveFirePixels(beam.PTransform):
 
 
 viirs_snpp_daily = (
-    beam.Create(file_pattern_generator())
+    beam.Create(pattern.items())
     | ReadActiveFirePixels(
         columns=viirs_usecols,
         renames=rename_viirs_columns,
@@ -108,6 +113,6 @@ viirs_snpp_daily = (
     )
     | StoreToZarr(
         store_name="viirs_snpp_daily.zarr",
-        combine_dims=[Dimension("YYYYMMDD_HHMM", CombineOp.CONCAT),]
+        combine_dims=pattern.combine_dim_keys
     )
 )
