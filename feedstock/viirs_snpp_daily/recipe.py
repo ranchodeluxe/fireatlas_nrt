@@ -150,6 +150,7 @@ viirs_snpp_daily = (
     )
     | StoreToZarr(
         store_name="viirs_snpp_daily.zarr",
-        combine_dims=pattern.combine_dim_keys
+        combine_dims=pattern.combine_dim_keys,
+        target_chunks={'YYYYMMDD_HHMM': 100}
     )
 )
