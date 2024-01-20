@@ -59,6 +59,12 @@ import os
 #     # ds = ds.set_coords('Lon')
 #     # ds = ds.set_coords('YYYYMMDD_HHMM')
 
+###############################################
+# EXISTING PROBLEMS
+###############################################
+# 0. we cannot index Lat, Lon and Time b/c float types create too big of an in memory array with Xarray
+# 0. we have to deal with strings types or Zarr blows up
+
 
 
 viirs_usecols = [
@@ -92,7 +98,7 @@ fsspec_open_kwargs = {
 }
 
 
-def file_dt_generator(begin=(2023, 9, 9), end=(2023, 9, 16)):
+def file_dt_generator(begin=(2023, 9, 1), end=(2023, 9, 30)):
     begin_dt, end_dt = datetime(*begin), datetime(*end)
     while begin_dt <= end_dt:
         yield begin_dt.strftime("%Y%j")
@@ -111,12 +117,15 @@ pattern = FilePattern(
 
 def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
     with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
-        df = pd.read_csv(
-            f,
-            parse_dates=[["acq_date", "acq_time"]],
-            usecols=columns,
-            skipinitialspace=True
-        )
+        try:
+            df = pd.read_csv(
+                f,
+                parse_dates=[["acq_date", "acq_time"]],
+                usecols=columns,
+                skipinitialspace=True
+            )
+        except FileNotFoundError:
+            df = pd.DataFrame(columns=columns)
         df = df.rename(columns=renames)
         # add index so xr.DataSet converts to dimensions
         df = df.set_index(['YYYYMMDD_HHMM'])
