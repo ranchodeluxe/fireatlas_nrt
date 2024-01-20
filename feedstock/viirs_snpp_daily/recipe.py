@@ -1,9 +1,7 @@
-import uuid
-
 import apache_beam as beam
 from pangeo_forge_recipes.transforms import (
     StoreToZarr,
-    _add_keys,
+    #_add_keys,
 )
 from pangeo_forge_recipes.types import Dimension, CombineOp
 import logging
@@ -14,6 +12,18 @@ import xarray as xr
 import fsspec
 import pandas as pd
 import os
+
+def _add_keys(
+    func
+):
+    """Convenience decorator to remove and re-add keys to items in a Map"""
+    # @wraps(func)  # doesn't work for some reason
+    def wrapper(arg, *args, **kwargs):
+        print(f"[ ARRRG ]: {arg}")
+        key, item = arg
+        result = func(item, *args, **kwargs)
+        return key, result
+    return wrapper
 
 
 viirs_usecols = [
@@ -59,8 +69,8 @@ def file_pattern_generator():
         yield f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{dt_str}.txt'
 
 
-def read_csv(file_pattern:str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
-    with fsspec.open(file_pattern, mode='r', **fsspec_open_kwargs) as f:
+def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
+    with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
         df = pd.read_csv(
             f,
             parse_dates=[["acq_date", "acq_time"]],
@@ -68,7 +78,7 @@ def read_csv(file_pattern:str, columns: List[str], renames: Dict, fsspec_open_kw
             skipinitialspace=True
         )
         df = df.rename(columns=renames)
-        return (str(uuid.uuid4())[:8], xr.Dataset.from_dataframe(df))
+        return xr.Dataset.from_dataframe(df)
 
 
 class ReadActiveFirePixels(beam.PTransform):
@@ -81,9 +91,9 @@ class ReadActiveFirePixels(beam.PTransform):
     def expand(self, pcoll):
         return pcoll | "ReadCSV" >> beam.Map(
                 _add_keys(read_csv),
-                columns=self.columns,
-                renames=self.renames,
-                fsspec_open_kwargs=fsspec_open_kwargs
+                self.columns,
+                self.renames,
+                fsspec_open_kwargs
             )
 
 
