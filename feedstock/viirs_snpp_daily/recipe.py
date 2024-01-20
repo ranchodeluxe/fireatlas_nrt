@@ -66,7 +66,7 @@ viirs_usecols = [
     "longitude",
     "daynight",
     "frp",
-    "confidence",
+    #"confidence",
     "scan",
     "track",
     "acq_date",
