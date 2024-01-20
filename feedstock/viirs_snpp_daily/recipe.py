@@ -5,6 +5,7 @@ from pangeo_forge_recipes.transforms import (
 )
 from pangeo_forge_recipes.types import Dimension, CombineOp
 import logging
+from typing import List, Dict
 from datetime import datetime, timedelta
 logger = logging.getLogger('apache-beam')
 import xarray as xr
@@ -56,6 +57,17 @@ def file_pattern_generator():
         yield f's3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_{dt_str}.txt'
 
 
+def read_csv(file_pattern:str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
+    with fsspec.open(file_pattern, mode='r', **fsspec_open_kwargs) as f:
+        df = pd.read_csv(
+            f,
+            parse_dates=[["acq_date", "acq_time"]],
+            usecols=columns,
+            skipinitialspace=True
+        )
+        df = df.rename(columns=renames)
+        return xr.Dataset.from_dataframe(df)
+
 
 class ReadActiveFirePixels(beam.PTransform):
 
@@ -64,22 +76,13 @@ class ReadActiveFirePixels(beam.PTransform):
         self.renames = renames
         self.fsspec_open_kwargs = fsspec_open_kwargs
 
-    def read_csv(self, file_pattern: str = None) -> xr.Dataset:
-        with fsspec.open(file_pattern, mode='r', **self.fsspec_open_kwargs) as f:
-            df = pd.read_csv(
-                f,
-                parse_dates=[["acq_date", "acq_time"]],
-                usecols=self.columns,
-                skipinitialspace=True
-            )
-            df = df.rename(columns=self.renames)
-            return xr.Dataset.from_dataframe(df)
-
     def expand(self, pcoll):
-        return (
-            pcoll
-            | "ReadCSV" >> beam.FlatMap(_add_keys(self.read_csv))
-        )
+        return pcoll | "ReadCSV" >> beam.Map(
+                _add_keys(self.read_csv),
+                columns=self.columns,
+                renames=self.renames,
+                fsspec_open_kwargs=fsspec_open_kwargs
+            )
 
 
 viirs_snpp_daily = (
