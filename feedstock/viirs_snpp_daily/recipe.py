@@ -24,9 +24,9 @@ import os
 #     "longitude",
 #     "daynight",
 #     "frp",
-#     "confidence",
-#     "scan",
-#     "track",
+#     #"confidence",
+#     #"scan",
+#     #"track",
 #     "acq_date",
 #     "acq_time",
 # ]
@@ -34,8 +34,8 @@ import os
 #     "latitude": "Lat",
 #     "longitude": "Lon",
 #     "frp": "FRP",
-#     "scan": "DS",
-#     "track": "DT",
+#     #"scan": "DS",
+#     #"track": "DT",
 #     "acq_date_acq_time": "YYYYMMDD_HHMM",
 # }
 # path='s3://gcorradini-forge-runner-test/snpp_daily/SUOMI_VIIRS_C2_Global_VNP14IMGTDL_NRT_2023240.txt'
@@ -47,10 +47,18 @@ import os
 #         skipinitialspace=True
 #     )
 #     df = df.rename(columns=renames)
+#     # to add indexes for xarray dimensions we need to reduce the dtypes
+#     df = df.astype( {
+#         'Lat': 'float32',
+#         'Lon': 'float32',
+#         'FRP': 'float16',
+#     })
+#     df = df.set_index(['YYYYMMDD_HHMM'])
 #     ds = xr.Dataset.from_dataframe(df)
-#     ds = ds.set_coords('Lat')
-#     ds = ds.set_coords('Lon')
-#     ds = ds.set_coords('YYYYMMDD_HHMM')
+#     # ds = ds.set_coords('Lat')
+#     # ds = ds.set_coords('Lon')
+#     # ds = ds.set_coords('YYYYMMDD_HHMM')
+
 
 
 viirs_usecols = [
@@ -110,11 +118,10 @@ def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwar
             skipinitialspace=True
         )
         df = df.rename(columns=renames)
+        # add index so xr.DataSet converts to dimensions
+        df = df.set_index(['YYYYMMDD_HHMM'])
         ds = xr.Dataset.from_dataframe(df)
-        # promote data variables to dimensions
-        ds = ds.set_coords('Lat')
-        ds = ds.set_coords('Lon')
-        ds = ds.set_coords('YYYYMMDD_HHMM')
+        ds = ds.chunk(1000)
         return ds
 
 
