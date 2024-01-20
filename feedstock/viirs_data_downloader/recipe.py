@@ -66,11 +66,11 @@ def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fss
     with fsspec.open(input_file_path, mode='r', block_size=0) as f:
         df = pd.read_csv(
             f,
-            parse_dates=[["acq_date", "acq_time"]],
-            usecols=columns,
+            # parse_dates=[["acq_date", "acq_time"]],
+            # usecols=columns,
             skipinitialspace=True
         )
-        df = df.rename(columns=renames)
+        #df = df.rename(columns=renames)
 
     output_file_path = os.path.join(output_path_prefix, file_name)
     with fsspec.open(output_file_path, mode='w', **fsspec_open_kwargs) as of:
