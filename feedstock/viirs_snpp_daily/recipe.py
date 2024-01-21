@@ -98,7 +98,8 @@ fsspec_open_kwargs = {
 }
 
 
-def file_dt_generator(begin=(2023, 9, 9), end=(2023, 9, 16)):
+now = datetime.now()
+def file_dt_generator(begin=(2023, 11, 9), end=(now.year, now.month, now.day)):
     begin_dt, end_dt = datetime(*begin), datetime(*end)
     while begin_dt <= end_dt:
         yield begin_dt.strftime("%Y%j")
@@ -116,21 +117,18 @@ pattern = FilePattern(
 
 
 def read_csv(file_path: str, columns: List[str], renames: Dict, fsspec_open_kwargs: Dict) -> xr.Dataset:
-    try:
-        with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
-            df = pd.read_csv(
-                f,
-                parse_dates=[["acq_date", "acq_time"]],
-                usecols=columns,
-                skipinitialspace=True
-            )
-            df = df.rename(columns=renames)
-            # add index so xr.DataSet converts to dimensions
-            df = df.set_index(['YYYYMMDD_HHMM'])
-    except FileNotFoundError:
-        df = pd.DataFrame(columns=columns)
-    ds = xr.Dataset.from_dataframe(df)
-    return ds
+    with fsspec.open(file_path, mode='r', **fsspec_open_kwargs) as f:
+        df = pd.read_csv(
+            f,
+            parse_dates=[["acq_date", "acq_time"]],
+            usecols=columns,
+            skipinitialspace=True
+        )
+        df = df.rename(columns=renames)
+        # add index so xr.DataSet converts to dimensions
+        df = df.set_index(['YYYYMMDD_HHMM'])
+        ds = xr.Dataset.from_dataframe(df)
+        return ds
 
 
 class ReadActiveFirePixels(beam.PTransform):
