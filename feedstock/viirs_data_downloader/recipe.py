@@ -9,6 +9,8 @@ import fsspec
 import pandas as pd
 import os
 
+ED_TOKEN = os.environ.get('EARTHDATA_TOKEN')
+
 viirs_usecols = [
     "latitude",
     "longitude",
@@ -32,7 +34,11 @@ rename_viirs_columns = {
 
 output_prefix = 's3://gcorradini-forge-runner-test/snpp_daily/'
 
-fsspec_open_kwargs = {
+input_fsspec_auth_kwargs = (
+    {'headers': {'Authorization': f'Bearer {ED_TOKEN}'}}
+)
+
+target_fsspec_open_kwargs = {
     'key': os.environ["S3_DEFAULT_AWS_ACCESS_KEY_ID"],
     'secret': os.environ["S3_DEFAULT_AWS_SECRET_ACCESS_KEY"],
     "anon": False,
@@ -59,11 +65,17 @@ pattern = FilePattern(
 )
 
 
-def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fsspec_open_kwargs: Dict, output_path_prefix: str) -> str:
+def download_csv(
+        item: Tuple[Index, str],
+        columns: List[str],
+        renames: Dict,
+        target_fsspec_open_kwargs: Dict,
+        input_fsspec_open_kwargs: Dict,
+        output_path_prefix: str) -> str:
     key, input_file_path = item
     file_name = os.path.basename(input_file_path)
 
-    with fsspec.open(input_file_path, mode='r', block_size=0) as f:
+    with fsspec.open(input_file_path, mode='r', block_size=0, **input_fsspec_open_kwargs) as f:
         df = pd.read_csv(
             f,
             # parse_dates=[["acq_date", "acq_time"]],
@@ -73,7 +85,7 @@ def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fss
         #df = df.rename(columns=renames)
 
     output_file_path = os.path.join(output_path_prefix, file_name)
-    with fsspec.open(output_file_path, mode='w', **fsspec_open_kwargs) as of:
+    with fsspec.open(output_file_path, mode='w', **target_fsspec_open_kwargs) as of:
         df.to_csv(of)
     return output_file_path
 
@@ -81,10 +93,11 @@ def download_csv(item: Tuple[Index, str], columns: List[str], renames: Dict, fss
 
 class DownloadViirsData(beam.PTransform):
 
-    def __init__(self, columns, renames, fsspec_open_kwargs, output_prefix):
+    def __init__(self, columns, renames, target_fsspec_open_kwargs, input_fsspec_open_kwargs, output_prefix):
         self.columns = columns
         self.renames = renames
-        self.fsspec_open_kwargs = fsspec_open_kwargs
+        self.target_fsspec_open_kwargs = target_fsspec_open_kwargs
+        self.input_fsspec_open_kwargs = input_fsspec_open_kwargs
         self.output_prefix = output_prefix
 
     def expand(self, pcoll):
@@ -92,7 +105,8 @@ class DownloadViirsData(beam.PTransform):
                 download_csv,
                 self.columns,
                 self.renames,
-                self.fsspec_open_kwargs,
+                self.target_fsspec_open_kwargs,
+                self.input_fsspec_open_kwargs,
                 self.output_prefix
             )
 
@@ -102,7 +116,8 @@ viirs_data = (
     | DownloadViirsData(
         columns=viirs_usecols,
         renames=rename_viirs_columns,
-        fsspec_open_kwargs=fsspec_open_kwargs,
+        target_fsspec_open_kwargs=target_fsspec_open_kwargs,
+        input_fsspec_open_kwargs=input_fsspec_auth_kwargs,
         output_prefix=output_prefix
     )
 )
