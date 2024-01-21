@@ -48,7 +48,7 @@ target_fsspec_open_kwargs = {
 }
 
 
-def file_dt_generator(begin=(2023, 11, 22), end=(2024, 1, 21)):
+def file_dt_generator(begin=(2023, 9, 1), end=(2024, 1, 21)):
     begin_dt, end_dt = datetime(*begin), datetime(*end)
     while begin_dt <= end_dt:
         yield begin_dt.strftime("%Y%j")
@@ -93,7 +93,6 @@ def download_csv(
         logger.error(f"[ CANNOT DOWNLOAD ]: {input_file_path}")
 
 
-
 class DownloadViirsData(beam.PTransform):
 
     def __init__(self, columns, renames, target_fsspec_open_kwargs, input_fsspec_open_kwargs, output_prefix):
@@ -112,7 +111,6 @@ class DownloadViirsData(beam.PTransform):
                 self.input_fsspec_open_kwargs,
                 self.output_prefix
             )
-
 
 viirs_data = (
     beam.Create(pattern.items())
