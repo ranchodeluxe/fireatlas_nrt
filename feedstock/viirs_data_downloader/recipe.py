@@ -75,19 +75,22 @@ def download_csv(
     key, input_file_path = item
     file_name = os.path.basename(input_file_path)
 
-    with fsspec.open(input_file_path, mode='r', block_size=0, **input_fsspec_open_kwargs) as f:
-        df = pd.read_csv(
-            f,
-            # parse_dates=[["acq_date", "acq_time"]],
-            # usecols=columns,
-            skipinitialspace=True
-        )
-        #df = df.rename(columns=renames)
+    try:
+        with fsspec.open(input_file_path, mode='r', block_size=0, **input_fsspec_open_kwargs) as f:
+            df = pd.read_csv(
+                f,
+                # parse_dates=[["acq_date", "acq_time"]],
+                # usecols=columns,
+                skipinitialspace=True
+            )
+            #df = df.rename(columns=renames)
 
-    output_file_path = os.path.join(output_path_prefix, file_name)
-    with fsspec.open(output_file_path, mode='w', **target_fsspec_open_kwargs) as of:
-        df.to_csv(of)
-    return output_file_path
+        output_file_path = os.path.join(output_path_prefix, file_name)
+        with fsspec.open(output_file_path, mode='w', **target_fsspec_open_kwargs) as of:
+            df.to_csv(of)
+        return output_file_path
+    except FileNotFoundError:
+        logger.error(f"[ CANNOT DOWNLOAD ]: {input_file_path}")
 
 
 
