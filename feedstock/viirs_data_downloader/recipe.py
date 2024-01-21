@@ -48,7 +48,7 @@ target_fsspec_open_kwargs = {
 }
 
 
-now = datetime.datetime.now()
+now = datetime.now()
 def file_dt_generator(begin=(2023, 11, 22), end=(now.year, now.month, now.day)):
     begin_dt, end_dt = datetime(*begin), datetime(*end)
     while begin_dt <= end_dt:
