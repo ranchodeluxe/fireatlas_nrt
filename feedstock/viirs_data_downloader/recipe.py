@@ -48,7 +48,7 @@ target_fsspec_open_kwargs = {
 }
 
 
-def file_dt_generator(begin=(2023, 11, 21), end=(2024, 1, 20)):
+def file_dt_generator(begin=(2023, 11, 22), end=(2024, 1, 21)):
     begin_dt, end_dt = datetime(*begin), datetime(*end)
     while begin_dt <= end_dt:
         yield begin_dt.strftime("%Y%j")
