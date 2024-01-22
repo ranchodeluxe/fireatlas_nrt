@@ -1,15 +1,27 @@
+#### Guiding Principles
 # look for non-vectorized operations and generally think about only using vectorized operations on arrays
 # look to reduce to single parallelized jobs
 # think about a single timestep
 
-0. I'm learning something important from apache-beam and pangeo-forge about remote files
+#### Guiding Principle
+0. I'm learning something important from writing workflows for apache-beam:
+    0. love how the framework parallelizes everything it is working on for all steps
+    0. love how the framework setup is just config and pass through to functions
+
 0. [parallel job]: region definitions and remove_static_sources updates
+
 0. [parallel job [daily||monthly]]: `read_AFP > read_AFPVIIRSNRT` globally to zarr store
+
+0. [other parallel jobs]: start with zarr store fire pixel reads
+
 0. note that AllFires.clear happens for each timestep (which means they are just used probably for a single timestep as lookups and can be moved out).
 this also means we might not have to manage this relationship.
 0. note that AllFire.heritages and AllFires.id_dict are commented "cumulative" so that's an operation that can and be stored separate
-0. each timestep day is a separate AllFires object
+0. each timestep day is a separate AllFires object so that means there's all this duplication between the AllFiles.fires
+at one timestep and the AllFires.fires at another timestep. Is this true?
+0. 'Fobj_init' "could" just find fire objects with xarray from a zarr store
 0. we only focus on 1-7
+0. we focus on an ETL that speeds up the reads
 
 # STOP:
 0. let's run a pangeo-forge recipe to convert active pixels to zarr store
